@@ -1,5 +1,4 @@
 ﻿Imports System.IO
-Imports System.Text
 Imports MySql.Data.MySqlClient
 
 Public Class Form1
@@ -74,7 +73,6 @@ Public Class Form1
                             End While
                         End If
                         Connection2.Close()
-                        'Dim SQLQuery5 As String = "UPDATE votes SET processed=1 WHERE id = " & reader("id") & ";"
                         Dim SQLQuery5 As String = "INSERT INTO votesprocessed SELECT * FROM votes WHERE id =" & reader("id") & ";DELETE FROM votes WHERE id = " & reader("id") & "; UPDATE votesprocessed SET processed=1 WHERE id = " & reader("id") & ";"
                         Dim Connection5 As MySqlConnection = New MySqlConnection(MySQLString)
                         Dim Command5 As New MySqlCommand(SQLQuery5, Connection5) With {.CommandTimeout = 999}
@@ -162,8 +160,8 @@ Public Class Form1
     End Sub
 
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
-        Dim pList() As System.Diagnostics.Process = System.Diagnostics.Process.GetProcessesByName("python.exe")
-        For Each proc As System.Diagnostics.Process In pList
+        Dim pList() As Process = Process.GetProcessesByName("python")
+        For Each proc As Process In pList
             proc.Kill()
         Next
     End Sub
