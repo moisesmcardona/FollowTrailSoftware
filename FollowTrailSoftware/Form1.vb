@@ -82,6 +82,7 @@ Public Class Form1
                 Dim Command5 As New MySqlCommand(SQLUpdateQueryString, Connection5) With {.CommandTimeout = 999}
                 Connection5.Open()
                 Command5.ExecuteNonQuery()
+                SQLUpdateQueryString = String.Empty
                 Connection5.Close()
                 Connection.Close()
                 Threading.Thread.Sleep(1000)
