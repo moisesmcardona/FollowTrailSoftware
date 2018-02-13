@@ -78,7 +78,7 @@ Public Class Form1
                                             Dim voter = reader("voter")
                                             Dim Thread1 As New System.Threading.Thread(Sub() VoteThreadAsync(author, permlink, percent, weight, username, voter))
                                             Thread1.Start()
-                                            System.Threading.Thread.Sleep(30)
+                                            System.Threading.Thread.Sleep(50)
                                         End If
                                     End While
                                 End If
