@@ -33,11 +33,15 @@ Public Class Form1
         Thread1.Start()
     End Sub
     Private Sub ProcessQuery(Query As String)
-        Dim Connection5 As MySqlConnection = New MySqlConnection(MySQLString)
-        Dim Command5 As New MySqlCommand(Query, Connection5) With {.CommandTimeout = 999}
-        Connection5.Open()
-        Command5.ExecuteNonQuery()
-        Connection5.Close()
+        Try
+            Dim Connection5 As MySqlConnection = New MySqlConnection(MySQLString)
+            Dim Command5 As New MySqlCommand(Query, Connection5)
+            Connection5.Open()
+            Command5.ExecuteNonQuery()
+            Connection5.Close()
+        Catch ex As Exception
+            My.Computer.FileSystem.WriteAllText("sqlerrorlog.txt", DateTime.Now & " | " & ex.ToString & vbCrLf, True)
+        End Try
     End Sub
     Private Sub SetPostAsProcessed(id As String)
         ProcessQuery("UPDATE votes SET processed=1 WHERE id = " & id & ";")
@@ -48,23 +52,23 @@ Public Class Form1
     Public Sub ProcessVotes()
         While True
             Try
-                Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 500"
+                Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 5000"
                 Dim Connection As MySqlConnection = New MySqlConnection(MySQLString)
-                Dim Command As New MySqlCommand(SQLQuery, Connection) With {.CommandTimeout = 999}
+                Dim Command As New MySqlCommand(SQLQuery, Connection)
                 Connection.Open()
                 Dim reader As MySqlDataReader = Command.ExecuteReader
                 If reader.HasRows Then
                     While reader.Read
                         Dim SQLQuery2 As String = "Select DISTINCT * FROM followtrail WHERE account='" & reader("voter") & "' AND enabled=1"
                         Dim Connection2 As MySqlConnection = New MySqlConnection(MySQLString)
-                        Dim Command2 As New MySqlCommand(SQLQuery2, Connection2) With {.CommandTimeout = 999}
+                        Dim Command2 As New MySqlCommand(SQLQuery2, Connection2)
                         Connection2.Open()
                         Dim reader2 As MySqlDataReader = Command2.ExecuteReader
                         If reader2.HasRows Then
                             While reader2.Read
                                 Dim SQLQuery3 As String = "SELECT DISTINCT * FROM users2 WHERE drupalkey='" & reader2("drupalkey") & "' AND approved=1"
                                 Dim Connection3 As MySqlConnection = New MySqlConnection(MySQLString)
-                                Dim Command3 As New MySqlCommand(SQLQuery3, Connection3) With {.CommandTimeout = 999}
+                                Dim Command3 As New MySqlCommand(SQLQuery3, Connection3)
                                 Connection3.Open()
                                 Dim reader3 As MySqlDataReader = Command3.ExecuteReader
                                 If reader3.HasRows Then
@@ -144,17 +148,16 @@ Public Class Form1
                     p2.Kill()
                 End If
                 If String.IsNullOrEmpty(ErrorResponse) = False Then
-                    My.Computer.FileSystem.WriteAllText("Logs\" + Username + "-" + Author + "-" + Permlink, ErrorResponse, True)
+                    ProcessQuery("INSERT INTO voteerrors (date, username, author, permlink, error) VALUES ('" & DateTime.Now & "', '" & Username & "', '" & Author & "', '" & Permlink & "','Error voting: " & ErrorResponse.Replace("'", "\'") & "')")
                 End If
                 If responseFromServer.Contains("ok") Then
                     ProcessQuery("INSERT INTO voted (author, permlink, voter, weight, processed, date, originalvoter) VALUES ('" & Author & "', '" & Permlink & "', '" & Username & "', '" & VP & "', 1, '" & DateTime.Now & "', '" & Voter & "')")
                 Else
                     ProcessQuery("INSERT INTO voted (author, permlink, voter, weight, processed, date, originalvoter) VALUES ('" & Author & "', '" & Permlink & "', '" & Username & "', '" & VP & "', 0, '" & DateTime.Now & "', '" & Voter & "')")
-                    My.Computer.FileSystem.WriteAllText("Logs\" + Username + "-" + Author + "-" + Permlink, responseFromServer, True)
                 End If
             End If
         Catch ex As Exception
-            My.Computer.FileSystem.WriteAllText("Logs\" + Username + "-" + Author + "-" + Permlink, ex.ToString, True)
+            ProcessQuery("INSERT INTO voteerrors (date, username, author, permlink, error) VALUES ('" & DateTime.Now & "', '" & Username & "', '" & Author & "', '" & Permlink & "', 'Catch Error: " & ex.ToString.Replace("'", "\'") & "')")
         End Try
     End Sub
 
