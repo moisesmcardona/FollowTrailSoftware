@@ -126,12 +126,9 @@ Public Class Form1
                 If VP < 0.0 Then VP = 1.0
                 If VP = 0.0 Then VP = Weight
                 If UsersWhoVoted.Contains(Username) = False Then VoteAnyway = True
-                'ElseIf Weight = 0.0 Then
-                '    VP = 0.0
-                '    If UsersWhoVoted.Contains(Username) = True Then VoteAnyway = True Else VoteAnyway = False
-                'Else
-                '    VP = Weight
-                '    If UsersWhoVoted.Contains(Username) = True Then VoteAnyway = True Else VoteAnyway = False
+            ElseIf (Weight = 0.0 Or Weight < 0.0) And UsersWhoVoted.Contains(Username) = False Then
+                VP = 0.0
+                If UsersWhoVoted.Contains(Username) Then VoteAnyway = True
             End If
             If VoteAnyway = True Then
                 Dim parameters2 As String = "votePost.py " & Author & "/" & Permlink & " " & String.Format("{0:F1}", VP) & " " & Username & " " & PK
