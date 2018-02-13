@@ -32,11 +32,23 @@ Public Class Form1
         Dim Thread1 As New System.Threading.Thread(Sub() ProcessVotes())
         Thread1.Start()
     End Sub
+    Private Sub ProcessQuery(Query As String)
+        Dim Connection5 As MySqlConnection = New MySqlConnection(MySQLString)
+        Dim Command5 As New MySqlCommand(Query, Connection5) With {.CommandTimeout = 999}
+        Connection5.Open()
+        Command5.ExecuteNonQuery()
+        Connection5.Close()
+    End Sub
+    Private Sub SetPostAsProcessed(id As String)
+        ProcessQuery("UPDATE votes SET processed=1 WHERE id = " & id & ";")
+    End Sub
+    Private Sub MoveProcessedPostsToVotesProcessedTable()
+        ProcessQuery("INSERT INTO votesprocessed SELECT * FROM votes WHERE processed=1;DELETE FROM votes WHERE processed=1;")
+    End Sub
     Public Sub ProcessVotes()
-        Dim SQLUpdateQueryString As String = String.Empty
         While True
             Try
-                Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 3000"
+                Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 500"
                 Dim Connection As MySqlConnection = New MySqlConnection(MySQLString)
                 Dim Command As New MySqlCommand(SQLQuery, Connection) With {.CommandTimeout = 999}
                 Connection.Open()
@@ -66,7 +78,7 @@ Public Class Form1
                                             Dim voter = reader("voter")
                                             Dim Thread1 As New System.Threading.Thread(Sub() VoteThreadAsync(author, permlink, percent, weight, username, voter))
                                             Thread1.Start()
-                                            System.Threading.Thread.Sleep(100)
+                                            System.Threading.Thread.Sleep(30)
                                         End If
                                     End While
                                 End If
@@ -74,21 +86,15 @@ Public Class Form1
                             End While
                         End If
                         Connection2.Close()
-                        SQLUpdateQueryString = SQLUpdateQueryString & "INSERT INTO votesprocessed SELECT * FROM votes WHERE id =" & reader("id") & ";DELETE FROM votes WHERE id = " & reader("id") & "; UPDATE votesprocessed SET processed=1 WHERE id = " & reader("id") & ";"
+                        SetPostAsProcessed(reader("id"))
                     End While
+                    MoveProcessedPostsToVotesProcessedTable()
                 End If
-                'batch insert and deletes from MySQL
-                Dim Connection5 As MySqlConnection = New MySqlConnection(MySQLString)
-                Dim Command5 As New MySqlCommand(SQLUpdateQueryString, Connection5) With {.CommandTimeout = 999}
-                Connection5.Open()
-                Command5.ExecuteNonQuery()
-                SQLUpdateQueryString = String.Empty
-                Connection5.Close()
                 Connection.Close()
-                Threading.Thread.Sleep(1000)
+                Threading.Thread.Sleep(500)
             Catch ex As Exception
                 My.Computer.FileSystem.WriteAllText("errorlog.txt", DateTime.Now & " | " & ex.ToString & vbCrLf, True)
-                Threading.Thread.Sleep(1000)
+                Threading.Thread.Sleep(500)
             End Try
         End While
     End Sub
@@ -141,19 +147,9 @@ Public Class Form1
                     My.Computer.FileSystem.WriteAllText("Logs\" + Username + "-" + Author + "-" + Permlink, ErrorResponse, True)
                 End If
                 If responseFromServer.Contains("ok") Then
-                    Dim SQLQuery4 As String = "INSERT INTO voted (author, permlink, voter, weight, processed, date, originalvoter) VALUES ('" & Author & "', '" & Permlink & "', '" & Username & "', '" & VP & "', 1, '" & DateTime.Now & "', '" & Voter & "')"
-                    Dim Connection4 As MySqlConnection = New MySqlConnection(MySQLString)
-                    Dim Command4 As New MySqlCommand(SQLQuery4, Connection4)
-                    Connection4.Open()
-                    Command4.ExecuteNonQuery()
-                    Connection4.Close()
+                    ProcessQuery("INSERT INTO voted (author, permlink, voter, weight, processed, date, originalvoter) VALUES ('" & Author & "', '" & Permlink & "', '" & Username & "', '" & VP & "', 1, '" & DateTime.Now & "', '" & Voter & "')")
                 Else
-                    Dim SQLQuery4 As String = "INSERT INTO voted (author, permlink, voter, weight, processed, date, originalvoter) VALUES ('" & Author & "', '" & Permlink & "', '" & Username & "', '" & VP & "', 0, '" & DateTime.Now & "', '" & Voter & "')"
-                    Dim Connection4 As MySqlConnection = New MySqlConnection(MySQLString)
-                    Dim Command4 As New MySqlCommand(SQLQuery4, Connection4)
-                    Connection4.Open()
-                    Command4.ExecuteNonQuery()
-                    Connection4.Close()
+                    ProcessQuery("INSERT INTO voted (author, permlink, voter, weight, processed, date, originalvoter) VALUES ('" & Author & "', '" & Permlink & "', '" & Username & "', '" & VP & "', 0, '" & DateTime.Now & "', '" & Voter & "')")
                     My.Computer.FileSystem.WriteAllText("Logs\" + Username + "-" + Author + "-" + Permlink, responseFromServer, True)
                 End If
             End If
