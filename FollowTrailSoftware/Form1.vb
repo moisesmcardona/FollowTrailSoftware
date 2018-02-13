@@ -33,10 +33,10 @@ Public Class Form1
         Thread1.Start()
     End Sub
     Public Sub ProcessVotes()
-
+        Dim SQLUpdateQueryString As String = String.Empty
         While True
             Try
-                Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 5000"
+                Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 3000"
                 Dim Connection As MySqlConnection = New MySqlConnection(MySQLString)
                 Dim Command As New MySqlCommand(SQLQuery, Connection) With {.CommandTimeout = 999}
                 Connection.Open()
@@ -66,6 +66,7 @@ Public Class Form1
                                             Dim voter = reader("voter")
                                             Dim Thread1 As New System.Threading.Thread(Sub() VoteThreadAsync(author, permlink, percent, weight, username, voter))
                                             Thread1.Start()
+                                            System.Threading.Thread.Sleep(100)
                                         End If
                                     End While
                                 End If
@@ -73,14 +74,15 @@ Public Class Form1
                             End While
                         End If
                         Connection2.Close()
-                        Dim SQLQuery5 As String = "INSERT INTO votesprocessed SELECT * FROM votes WHERE id =" & reader("id") & ";DELETE FROM votes WHERE id = " & reader("id") & "; UPDATE votesprocessed SET processed=1 WHERE id = " & reader("id") & ";"
-                        Dim Connection5 As MySqlConnection = New MySqlConnection(MySQLString)
-                        Dim Command5 As New MySqlCommand(SQLQuery5, Connection5) With {.CommandTimeout = 999}
-                        Connection5.Open()
-                        Command5.ExecuteNonQuery()
-                        Connection5.Close()
+                        SQLUpdateQueryString = SQLUpdateQueryString & "INSERT INTO votesprocessed SELECT * FROM votes WHERE id =" & reader("id") & ";DELETE FROM votes WHERE id = " & reader("id") & "; UPDATE votesprocessed SET processed=1 WHERE id = " & reader("id") & ";"
                     End While
                 End If
+                'batch insert and deletes from MySQL
+                Dim Connection5 As MySqlConnection = New MySqlConnection(MySQLString)
+                Dim Command5 As New MySqlCommand(SQLUpdateQueryString, Connection5) With {.CommandTimeout = 999}
+                Connection5.Open()
+                Command5.ExecuteNonQuery()
+                Connection5.Close()
                 Connection.Close()
                 Threading.Thread.Sleep(1000)
             Catch ex As Exception
