@@ -52,7 +52,7 @@ Public Class Form1
     Public Sub ProcessVotes()
         While True
             Try
-                Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 5000"
+                Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 1000"
                 Dim Connection As MySqlConnection = New MySqlConnection(MySQLString)
                 Dim Command As New MySqlCommand(SQLQuery, Connection)
                 Connection.Open()
@@ -73,6 +73,9 @@ Public Class Form1
                                 Dim reader3 As MySqlDataReader = Command3.ExecuteReader
                                 If reader3.HasRows Then
                                     While reader3.Read
+                                        While Math.Round(My.Computer.Info.AvailablePhysicalMemory / 1024 / 1024 / 1024, 2) < 4.0
+                                            Threading.Thread.Sleep(1000)
+                                        End While
                                         If String.IsNullOrEmpty(reader3("username")) = False Then
                                             Dim author = reader("author")
                                             Dim permlink = reader("permlink")
@@ -80,9 +83,9 @@ Public Class Form1
                                             Dim weight = reader("weight")
                                             Dim username = reader3("username")
                                             Dim voter = reader("voter")
-                                            Dim Thread1 As New System.Threading.Thread(Sub() VoteThreadAsync(author, permlink, percent, weight, username, voter))
+                                            Dim Thread1 As New Threading.Thread(Sub() VoteThreadAsync(author, permlink, percent, weight, username, voter))
                                             Thread1.Start()
-                                            System.Threading.Thread.Sleep(50)
+                                            Threading.Thread.Sleep(100)
                                         End If
                                     End While
                                 End If
@@ -105,11 +108,12 @@ Public Class Form1
     Private Sub VoteThreadAsync(Author As String, Permlink As String, Percent As String, Weight As String, Username As String, Voter As String)
         Try
             Dim parameters As String = "getPostVotes.py " & Author & "/" & Permlink
-            Dim info As ProcessStartInfo = New ProcessStartInfo("python", parameters)
-            info.CreateNoWindow = True
-            info.RedirectStandardOutput = True
-            info.RedirectStandardError = True
-            info.UseShellExecute = False
+            Dim info As ProcessStartInfo = New ProcessStartInfo("python", parameters) With {
+                .CreateNoWindow = True,
+                .RedirectStandardOutput = True,
+                .RedirectStandardError = True,
+                .UseShellExecute = False
+            }
             Dim p As Process = Process.Start(info)
             Dim UsersWhoVoted As String = p.StandardOutput.ReadToEnd
             p.WaitForExit(10000)
@@ -132,11 +136,12 @@ Public Class Form1
             End If
             If VoteAnyway = True Then
                 Dim parameters2 As String = "votePost.py " & Author & "/" & Permlink & " " & String.Format("{0:F1}", VP) & " " & Username & " " & PK
-                Dim info2 As ProcessStartInfo = New ProcessStartInfo("python", parameters2)
-                info2.RedirectStandardOutput = True
-                info2.RedirectStandardError = True
-                info2.CreateNoWindow = True
-                info2.UseShellExecute = False
+                Dim info2 As ProcessStartInfo = New ProcessStartInfo("python", parameters2) With {
+                    .RedirectStandardOutput = True,
+                    .RedirectStandardError = True,
+                    .CreateNoWindow = True,
+                    .UseShellExecute = False
+                }
                 Dim p2 As Process = Process.Start(info2)
                 Dim responseFromServer As String = p2.StandardOutput.ReadToEnd
                 Dim ErrorResponse As String = p2.StandardError.ReadToEnd
@@ -165,4 +170,11 @@ Public Class Form1
         Next
     End Sub
 
+    Private Sub Label2_Click(sender As Object, e As EventArgs) Handles Label2.Click
+        Label2.Text = "Free RAM: " & Math.Round(My.Computer.Info.AvailablePhysicalMemory / 1024 / 1024 / 1024, 2) & " GB"
+    End Sub
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Label2.Text = "Free RAM: " & Math.Round(My.Computer.Info.AvailablePhysicalMemory / 1024 / 1024 / 1024, 2) & " GB"
+    End Sub
 End Class
