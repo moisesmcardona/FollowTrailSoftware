@@ -1,4 +1,5 @@
 ﻿Imports System.IO
+Imports System.Text
 Imports MySql.Data.MySqlClient
 
 Public Class Form1
@@ -47,7 +48,7 @@ Public Class Form1
         ProcessQuery("UPDATE votes SET processed=1 WHERE id = " & id & ";")
     End Sub
     Private Sub MoveProcessedPostsToVotesProcessedTable()
-        ProcessQuery("INSERT INTO votesprocessed SELECT * FROM votes WHERE processed=1;DELETE FROM votes WHERE processed=1;")
+        ProcessQuery("INSERT INTO votesprocessed (author, permlink, voter, weight, processed, date) SELECT author, permlink, voter, weight, processed, date FROM votes WHERE processed=1;DELETE FROM votes WHERE processed=1;")
     End Sub
     Public Sub ProcessVotes()
         While True
@@ -107,19 +108,12 @@ Public Class Form1
     End Sub
     Private Sub VoteThreadAsync(Author As String, Permlink As String, Percent As String, Weight As String, Username As String, Voter As String)
         Try
-            Dim parameters As String = "getPostVotes.py " & Author & "/" & Permlink
-            Dim info As ProcessStartInfo = New ProcessStartInfo("python", parameters) With {
-                .CreateNoWindow = True,
-                .RedirectStandardOutput = True,
-                .RedirectStandardError = True,
-                .UseShellExecute = False
-            }
-            Dim p As Process = Process.Start(info)
-            Dim UsersWhoVoted As String = p.StandardOutput.ReadToEnd
-            p.WaitForExit(10000)
-            If p.HasExited = False Then
-                p.Kill()
-            End If
+            Dim getPostVotesRequest As Net.WebRequest = Net.WebRequest.Create("http://localhost:8000/getPostVotes/?p=" & Author & "/" & Permlink)
+            Dim getPostVotesResponse As Net.WebResponse = getPostVotesRequest.GetResponse()
+            Dim ReceiveStream1 As Stream = getPostVotesResponse.GetResponseStream()
+            Dim encode As Encoding = System.Text.Encoding.GetEncoding("utf-8")
+            Dim readStream1 As New StreamReader(ReceiveStream1, encode)
+            Dim UsersWhoVoted = readStream1.ReadToEnd 
             Dim VP As String = Percent
             Dim VoteAnyway As Boolean = False
             VP = VP.Replace("%", "")
@@ -135,27 +129,27 @@ Public Class Form1
                 If UsersWhoVoted.Contains(Username) Then VoteAnyway = True
             End If
             If VoteAnyway = True Then
-                Dim parameters2 As String = "votePost.py " & Author & "/" & Permlink & " " & String.Format("{0:F1}", VP) & " " & Username & " " & PK
-                Dim info2 As ProcessStartInfo = New ProcessStartInfo("python", parameters2) With {
-                    .RedirectStandardOutput = True,
-                    .RedirectStandardError = True,
-                    .CreateNoWindow = True,
-                    .UseShellExecute = False
-                }
-                Dim p2 As Process = Process.Start(info2)
-                Dim responseFromServer As String = p2.StandardOutput.ReadToEnd
-                Dim ErrorResponse As String = p2.StandardError.ReadToEnd
-                p2.WaitForExit(10000)
-                If p2.HasExited = False Then
-                    p2.Kill()
-                End If
-                If String.IsNullOrEmpty(ErrorResponse) = False Then
-                    ProcessQuery("INSERT INTO voteerrors (date, username, author, permlink, error) VALUES ('" & DateTime.Now & "', '" & Username & "', '" & Author & "', '" & Permlink & "','Error voting: " & ErrorResponse.Replace("'", "\'") & "')")
-                End If
+                Dim VoteRequest As System.Net.WebRequest = System.Net.WebRequest.Create("http://localhost:8000/vote/")
+                VoteRequest.Method = "POST"
+                Dim postData As String = "i=" & Author & "/" & Permlink & "&w=" & String.Format("{0:F1}", VP) & "&v=" & Username & "&pk=" & PK
+                Dim byteArray As Byte() = Encoding.UTF8.GetBytes(postData)
+                VoteRequest.ContentType = "application/x-www-form-urlencoded"
+                VoteRequest.ContentLength = byteArray.Length
+                Dim dataStream As Stream = VoteRequest.GetRequestStream()
+                dataStream.Write(byteArray, 0, byteArray.Length)
+                dataStream.Close()
+                Dim VoteResponse As Net.WebResponse = VoteRequest.GetResponse()
+                dataStream = VoteResponse.GetResponseStream()
+                Dim reader As New StreamReader(dataStream)
+                Dim responseFromServer As String = reader.ReadToEnd()
+                reader.Close()
+                dataStream.Close()
+                VoteResponse.Close()
                 If responseFromServer.Contains("ok") Then
                     ProcessQuery("INSERT INTO voted (author, permlink, voter, weight, processed, date, originalvoter) VALUES ('" & Author & "', '" & Permlink & "', '" & Username & "', '" & VP & "', 1, '" & DateTime.Now & "', '" & Voter & "')")
                 Else
                     ProcessQuery("INSERT INTO voted (author, permlink, voter, weight, processed, date, originalvoter) VALUES ('" & Author & "', '" & Permlink & "', '" & Username & "', '" & VP & "', 0, '" & DateTime.Now & "', '" & Voter & "')")
+                    ProcessQuery("INSERT INTO voteerrors (date, username, author, permlink, error) VALUES ('" & DateTime.Now & "', '" & Username & "', '" & Author & "', '" & Permlink & "','Error voting: " & responseFromServer.Replace("'", "\'") & "')")
                 End If
             End If
         Catch ex As Exception
