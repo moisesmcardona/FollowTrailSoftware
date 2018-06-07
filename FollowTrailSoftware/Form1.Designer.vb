@@ -24,7 +24,6 @@ Partial Class Form1
     Private Sub InitializeComponent()
         Me.Button1 = New System.Windows.Forms.Button()
         Me.Label1 = New System.Windows.Forms.Label()
-        Me.Button2 = New System.Windows.Forms.Button()
         Me.Label2 = New System.Windows.Forms.Label()
         Me.SuspendLayout
         '
@@ -46,19 +45,10 @@ Partial Class Form1
         Me.Label1.TabIndex = 1
         Me.Label1.Text = "Not Running"
         '
-        'Button2
-        '
-        Me.Button2.Location = New System.Drawing.Point(15, 118)
-        Me.Button2.Name = "Button2"
-        Me.Button2.Size = New System.Drawing.Size(163, 61)
-        Me.Button2.TabIndex = 2
-        Me.Button2.Text = "Kill"
-        Me.Button2.UseVisualStyleBackColor = true
-        '
         'Label2
         '
         Me.Label2.AutoSize = true
-        Me.Label2.Location = New System.Drawing.Point(9, 193)
+        Me.Label2.Location = New System.Drawing.Point(12, 92)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(97, 13)
         Me.Label2.TabIndex = 3
@@ -68,9 +58,8 @@ Partial Class Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6!, 13!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(203, 236)
+        Me.ClientSize = New System.Drawing.Size(203, 114)
         Me.Controls.Add(Me.Label2)
-        Me.Controls.Add(Me.Button2)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.Button1)
         Me.MaximizeBox = false
@@ -84,6 +73,5 @@ End Sub
 
     Friend WithEvents Button1 As Button
     Friend WithEvents Label1 As Label
-    Friend WithEvents Button2 As Button
     Friend WithEvents Label2 As Label
 End Class

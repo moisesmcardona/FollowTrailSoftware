@@ -168,13 +168,6 @@ Public Class Form1
         End Try
     End Sub
 
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
-        Dim pList() As Process = Process.GetProcessesByName("python")
-        For Each proc As Process In pList
-            proc.Kill()
-        Next
-    End Sub
-
     Private Sub Label2_Click(sender As Object, e As EventArgs) Handles Label2.Click
         Label2.Text = "Free RAM: " & Math.Round(My.Computer.Info.AvailablePhysicalMemory / 1024 / 1024 / 1024, 2) & " GB"
     End Sub
