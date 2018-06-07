@@ -88,9 +88,6 @@ Public Class Form1
                                 Dim reader3 As MySqlDataReader = Command3.ExecuteReader
                                 If reader3.HasRows Then
                                     While reader3.Read
-                                        While Math.Round(My.Computer.Info.AvailablePhysicalMemory / 1024 / 1024 / 1024, 2) < 4.0
-                                            Threading.Thread.Sleep(1000)
-                                        End While
                                         If String.IsNullOrEmpty(reader3("username")) = False Then
                                             Dim author = reader("author")
                                             Dim permlink = reader("permlink")
@@ -122,7 +119,7 @@ Public Class Form1
     End Sub
     Private Sub VoteThreadAsync(Author As String, Permlink As String, Percent As String, Weight As String, Username As String, Voter As String)
         Try
-            Dim getPostVotesRequest As Net.WebRequest = Net.WebRequest.Create("http://" + API_Host + "/getPostVotes/?p=" & Author & "/" & Permlink)
+            Dim getPostVotesRequest As Net.WebRequest = Net.WebRequest.Create(API_Host + "/getPostVotes/?p=" & Author & "/" & Permlink)
             Dim getPostVotesResponse As Net.WebResponse = getPostVotesRequest.GetResponse()
             Dim ReceiveStream1 As Stream = getPostVotesResponse.GetResponseStream()
             Dim encode As Encoding = System.Text.Encoding.GetEncoding("utf-8")
@@ -143,7 +140,7 @@ Public Class Form1
                 If UsersWhoVoted.Contains(Username) Then VoteAnyway = True
             End If
             If VoteAnyway = True Then
-                Dim VoteRequest As System.Net.WebRequest = System.Net.WebRequest.Create("http://localhost:8000/vote/")
+                Dim VoteRequest As System.Net.WebRequest = System.Net.WebRequest.Create(API_Host + "/vote/")
                 VoteRequest.Method = "POST"
                 Dim postData As String = "i=" & Author & "/" & Permlink & "&w=" & String.Format("{0:F1}", VP) & "&v=" & Username & "&pk=" & PK
                 Dim byteArray As Byte() = Encoding.UTF8.GetBytes(postData)
