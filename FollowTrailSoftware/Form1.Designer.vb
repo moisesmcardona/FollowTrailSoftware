@@ -26,7 +26,7 @@ Partial Class Form1
         Me.Label1 = New System.Windows.Forms.Label()
         Me.Button2 = New System.Windows.Forms.Button()
         Me.Label2 = New System.Windows.Forms.Label()
-        Me.SuspendLayout()
+        Me.SuspendLayout
         '
         'Button1
         '
@@ -35,11 +35,11 @@ Partial Class Form1
         Me.Button1.Size = New System.Drawing.Size(163, 61)
         Me.Button1.TabIndex = 0
         Me.Button1.Text = "Run"
-        Me.Button1.UseVisualStyleBackColor = True
+        Me.Button1.UseVisualStyleBackColor = true
         '
         'Label1
         '
-        Me.Label1.AutoSize = True
+        Me.Label1.AutoSize = true
         Me.Label1.Location = New System.Drawing.Point(12, 76)
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(67, 13)
@@ -53,11 +53,11 @@ Partial Class Form1
         Me.Button2.Size = New System.Drawing.Size(163, 61)
         Me.Button2.TabIndex = 2
         Me.Button2.Text = "Kill"
-        Me.Button2.UseVisualStyleBackColor = True
+        Me.Button2.UseVisualStyleBackColor = true
         '
         'Label2
         '
-        Me.Label2.AutoSize = True
+        Me.Label2.AutoSize = true
         Me.Label2.Location = New System.Drawing.Point(9, 193)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(97, 13)
@@ -66,21 +66,21 @@ Partial Class Form1
         '
         'Form1
         '
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
+        Me.AutoScaleDimensions = New System.Drawing.SizeF(6!, 13!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(203, 236)
         Me.Controls.Add(Me.Label2)
         Me.Controls.Add(Me.Button2)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.Button1)
-        Me.MaximizeBox = False
-        Me.MinimizeBox = False
+        Me.MaximizeBox = false
+        Me.MinimizeBox = false
         Me.Name = "Form1"
         Me.Text = "Follow Votes"
-        Me.ResumeLayout(False)
-        Me.PerformLayout()
+        Me.ResumeLayout(false)
+        Me.PerformLayout
 
-    End Sub
+End Sub
 
     Friend WithEvents Button1 As Button
     Friend WithEvents Label1 As Label

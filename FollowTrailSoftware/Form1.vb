@@ -4,14 +4,21 @@ Imports MySql.Data.MySqlClient
 
 Public Class Form1
     Dim MySQLString As String = String.Empty
+    Dim API_Host As String = String.Empty
     Dim PK As String = My.Computer.FileSystem.ReadAllText("ppk.txt")
+    Dim CloseSoftware As Boolean = False
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
-        Dim MySQLFile As StreamReader = New StreamReader("MySQLConfig.txt")
-        Dim currentline As String = ""
-        Dim MySQLServer As String = ""
-        Dim MySQLUser As String = ""
-        Dim MySQLPassword As String = ""
-        Dim MySQLDatabase As String = ""
+       RunSystem()
+    End Sub
+
+    Private Sub RunSystem
+        Dim MySQLFile As StreamReader = New StreamReader("config.txt")
+        Dim currentline As String =  String.Empty
+        Dim MySQLServer As String =  String.Empty
+        Dim MySQLUser As String =  String.Empty
+        Dim MySQLPassword As String =  String.Empty
+        Dim MySQLDatabase As String =  String.Empty
+        Dim SSLMode As String = String.Empty
         While MySQLFile.EndOfStream = False
             currentline = MySQLFile.ReadLine
             If currentline.Contains("server") Then
@@ -26,11 +33,17 @@ Public Class Form1
             ElseIf currentline.Contains("database") Then
                 Dim GetDatabase As String() = currentline.Split("=")
                 MySQLDatabase = GetDatabase(1)
+            ElseIf currentline.Contains("sslmode") Then
+                Dim GetSSLMode As String() = currentline.Split("=")
+                SSLMode = GetSSLMode(1)
+            ElseIf currentline.Contains("api") Then
+                Dim Get_API_Host As String() = currentline.Split("=")
+                API_Host = Get_API_Host(1)
             End If
         End While
-        MySQLString = "server=" + MySQLServer + ";user=" + MySQLUser + ";database=" + MySQLDatabase + ";port=3306;password=" + MySQLPassword + ";"
+        MySQLString = "server=" + MySQLServer + ";user=" + MySQLUser + ";database=" + MySQLDatabase + ";port=3306;password=" + MySQLPassword + ";sslmode=" + sslmode
         Label1.Text = "Running"
-        Dim Thread1 As New System.Threading.Thread(Sub() ProcessVotes())
+        Dim Thread1 As New Threading.Thread(Sub() ProcessVotes())
         Thread1.Start()
     End Sub
     Private Sub ProcessQuery(Query As String)
@@ -52,6 +65,7 @@ Public Class Form1
     End Sub
     Public Sub ProcessVotes()
         While True
+            If CloseSoftware = True Then Exit While
             Try
                 Dim SQLQuery As String = "Select  * FROM votes WHERE processed=0 LIMIT 1000"
                 Dim Connection As MySqlConnection = New MySqlConnection(MySQLString)
@@ -108,7 +122,7 @@ Public Class Form1
     End Sub
     Private Sub VoteThreadAsync(Author As String, Permlink As String, Percent As String, Weight As String, Username As String, Voter As String)
         Try
-            Dim getPostVotesRequest As Net.WebRequest = Net.WebRequest.Create("http://localhost:8000/getPostVotes/?p=" & Author & "/" & Permlink)
+            Dim getPostVotesRequest As Net.WebRequest = Net.WebRequest.Create("http://" + API_Host + "/getPostVotes/?p=" & Author & "/" & Permlink)
             Dim getPostVotesResponse As Net.WebResponse = getPostVotesRequest.GetResponse()
             Dim ReceiveStream1 As Stream = getPostVotesResponse.GetResponseStream()
             Dim encode As Encoding = System.Text.Encoding.GetEncoding("utf-8")
@@ -169,6 +183,16 @@ Public Class Form1
     End Sub
 
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Dim vars As String() = Environment.GetCommandLineArgs
+        If vars.Count > 1 Then
+            If vars(1) = "-s" Then
+                RunSystem()
+            End If
+        End If
         Label2.Text = "Free RAM: " & Math.Round(My.Computer.Info.AvailablePhysicalMemory / 1024 / 1024 / 1024, 2) & " GB"
+    End Sub
+
+    Private Sub Form1_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
+        CloseSoftware = True
     End Sub
 End Class
